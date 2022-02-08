@@ -1,0 +1,104 @@
+/* ******* Margens *********/
+
+.m-a{
+	margin: auto;
+}
+.m-5{
+	margin: 5px;
+}
+
+.mr-10{
+	margin-right: 10px;
+}
+
+.mt-10{
+	margin-top: 10px;
+}
+
+.mt-15{
+	margin-top: 15px;
+}
+
+.mt-20{
+	margin-top: 20px;
+}
+
+.mb-8{
+	margin-bottom: 8px;
+}
+
+.mb-10{
+	margin-bottom: 10px;
+}
+
+.mb-15{
+	margin-bottom: 15px;
+}
+
+/********** Paddings *********/
+
+.p-20{
+	padding: 20px;
+}
+
+/*********** Texts ***********/
+
+.title{
+	font-size: 30px;
+}
+
+.text-center{
+	text-align: center;
+}
+
+.link{
+	color:#1877f2;
+	cursor: pointer;
+}
+
+.float-left{
+	float: left;
+}
+
+.float-right{
+	float: right;
+}
+
+/******** AUX **********/
+
+.bg-white{
+	background-color: #fff;
+}
+
+.align-center{
+	justify-content: center;
+	align-items: center;
+}
+
+.position-fixed{
+	position: fixed;
+}
+
+.footer {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+}
+
+/* ******* Tests *********/
+
+.test{
+	border: 3px solid red;
+	width: 200px;
+	height: 250px;
+}
+
+.click{
+	cursor: pointer;
+}
+
+.hidden{
+	display: none;
+}
+

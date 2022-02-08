@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  photo-slide-front:
+    restart: always
+    build: ./front
+    ports:
+      - "3007:3000"
+    volumes:
+      - ./front:/usr/src
+  
+  photo-slide-back:
+    restart: always
+    build: ./api
+    command: "npm start"
+    ports:
+      - "8097:8097"
+    volumes:
+      - ./api:/user/app

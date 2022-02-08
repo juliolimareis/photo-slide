@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  photo-slide-front:
+    restart: always
+    build: .
+    command: "npm start"
+    ports:
+      - "3007:3000"
+    volumes:
+      - .:/usr/src

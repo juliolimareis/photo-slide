@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  photo-slide-back:
+    restart: always
+    build: .
+    command: "npm start"
+    ports:
+      - "8087:8087"
+    volumes:
+      - .:/user/app
