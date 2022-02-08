@@ -1,8 +1,9 @@
 import React from "react"
 import { Photo } from "../models/Photo"
 
+import { getUrl } from "../config/api"
 import { ProfileProvider } from "../provider/ProfileProvider"
-import { Button, Grid, GridItem, Text, ModalOverlay, Center } from "@chakra-ui/react"
+import { Grid, GridItem, Text, Center } from "@chakra-ui/react"
 
 export default class ImageComponent extends React.Component
 	<{
@@ -10,7 +11,7 @@ export default class ImageComponent extends React.Component
 	}, any>{
 
 	profileProvider = new ProfileProvider()
-	urlImage = `${process.env.API_URL}/image`
+	urlImage = `${getUrl()}/image`
 
 	render() {
 		return (

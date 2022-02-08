@@ -55,7 +55,7 @@ export default class RegisterPage extends React.Component
 		this.setLoading(true)
 		await this.userProvider.create(this.state.register).then(
 			() => {
-				Router.replace('/login')
+				Router.replace('/')
 			},
 			(error: AxiosError) => {
 				this.setMessageRequestError(error)

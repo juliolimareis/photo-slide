@@ -119,7 +119,7 @@ export default class HomePage extends React.Component<{}, { albuns: Album[], isO
 							<ModalComponent onClose={this.onClose}
 								isOpen={this.state.isOpenNewAlbum}
 								title="Criar Novo álbum"
-								body={<FormNewAlbum></FormNewAlbum>}>
+								body={<FormNewAlbum onSend={this.onClose}></FormNewAlbum>}>
 							</ModalComponent>
 							
 						</span>

@@ -5,7 +5,7 @@ import { Album } from '../models/Album'
 import { Input, Text, Button, Grid, GridItem, Textarea, CircularProgress } from '@chakra-ui/react'
 import { ProfileProvider } from '../provider/ProfileProvider'
 
-export default class FormAddAlbum extends React.Component<{}, {album: Album, isLoading: boolean}>{
+export default class FormAddAlbum extends React.Component<{onSend(): void}, {album: Album, isLoading: boolean}>{
 	mbText: string = '8px'
 	marginElement: string = '10px'
 	profileProvider = new ProfileProvider()
@@ -22,15 +22,17 @@ export default class FormAddAlbum extends React.Component<{}, {album: Album, isL
 		}
 	}
 
-	dispatchAlbum = () => {
-
+	setLoading(value: boolean) {
 		this.setState({
-			isLoading: true
+			isLoading: value
 		})
+	}
 
-		// console.log(this.state.album);
+	dispatchAlbum = async () => {
+
+		this.setLoading(true)	
 		
-		this.profileProvider.addAlbum(this.state.album).then(
+		await this.profileProvider.addAlbum(this.state.album).then(
 			() => {
 				this.setState({
 					isLoading: false,
@@ -40,11 +42,15 @@ export default class FormAddAlbum extends React.Component<{}, {album: Album, isL
 						coverUrl: ''
 					},
 				})
+				this.props.onSend()
 			},
 			error => {
 				console.log(error);
+				this.setLoading(false)	
 			}
 		)
+
+
 	}
 
 	setValue = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, fieldName: string) => {
@@ -55,22 +61,6 @@ export default class FormAddAlbum extends React.Component<{}, {album: Album, isL
 			album: album
 		})
 	}
-
-	// setTitle = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-	// 	this.setState({
-	// 		album: {
-	// 			title: e.target.value,
-	// 		}
-	// 	})
-	// }
-	
-	// setDescription = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-	// 	this.setState({
-	// 		album: {
-	// 			description: e.target.value,
-	// 		}
-	// 	})
-	// }
 
 	render() {
 		return (

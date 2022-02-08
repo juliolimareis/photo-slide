@@ -53,12 +53,12 @@ export class Server {
 
   $beforeRoutesInit(): void {
     this.app
-      .use(cors())
+      // .use(cors())
+			.use(cors({origin: ['http://localhost:3000', 'http://localhost:3007']}))
       .use(cookieParser())
       .use(compress({}))
       .use(methodOverride())
       .use(bodyParser.json())
-			.use(cors({origin: 'http://localhost:3000'}))
       .use(bodyParser.urlencoded({
         extended: true
       }))

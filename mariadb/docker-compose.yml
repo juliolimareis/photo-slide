@@ -1,14 +1,7 @@
 version: "3.1"
 
 services:
-  photo-slide-front:
-    restart: always
-    build: ./front
-    ports:
-      - "3007:3000"
-    volumes:
-      - ./front:/usr/src
-  
+
   photo-slide-database:
     image: mariadb
     restart: always
@@ -22,16 +15,5 @@ services:
       MYSQL_USER: admin
       MYSQL_PASSWORD: f2uj56746
     container_name: photo-slide-database
-
-  photo-slide-back:
-    restart: always
-    build: ./api
-    command: "npm start"
-    ports:
-      - "8097:8097"
-    volumes:
-      - ./api:/user/app
-    depends_on:
-      - photo-slide-database
 
 

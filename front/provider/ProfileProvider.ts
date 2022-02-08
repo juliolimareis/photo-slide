@@ -21,7 +21,7 @@ export class ProfileProvider {
 	}
 	
 	async addAlbum(album: Album): Promise<AxiosResponse<Album>> {
-		return await api.post<Album>('/profile/album', {body: album, headers: getHeaders()})
+		return await api.post<Album>('/profile/album', album, {headers: getHeaders()})
 	}
 
 	async deleteAlbum(idAbum: string): Promise<void> {

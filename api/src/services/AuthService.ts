@@ -34,9 +34,8 @@ export class AuthService {
 	}
 
 	getMD5Password(password: string): string {
-		// let md5 = require('md5');
-		// return md5(password)
-		return password
+		let md5 = require('md5');
+		return md5(password)
 	}
 
 	varifyTokenRequest(req: Req): boolean {
