@@ -42,7 +42,7 @@ export default class ModalComponent extends React.Component
 			<Modal isOpen={this.props.isOpen} onClose={this.props.onClose} size={this.props.size}>
 				<ModalOverlay/>
 				<ModalContent>
-					<ModalHeader >{this.props.title}</ModalHeader>
+					<ModalHeader>{this.props.title}</ModalHeader>
 					<ModalCloseButton/>
 					<ModalBody>
 						{this.props.body}

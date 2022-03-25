@@ -1,60 +1,56 @@
-import React from 'react'
-import Link from 'next/link'
-
+import React, { useEffect } from 'react'
 import Title from './Title'
-
 import Router from 'next/router'
 import { User } from '../models/User'
 import { ProfileProvider } from '../provider/ProfileProvider'
+import { Message } from '../core/Messages'
+// import useSnackbar from '../core/useSnackbar'
+import { Box } from '@chakra-ui/react'
 
-export default class Header extends React.Component<{title: string}, {user: User}>{
+const HeaderPrivate = (props: {title: string}): JSX.Element => {
+	// const snackbar = useSnackbar()
 
-	profileProvider = new ProfileProvider()
+	const profileProvider = new ProfileProvider()
+	const [user, setUser] = React.useState<User>({})
 
-	constructor(props: any) {
-		super(props)
-		
-		this.state = {
-			user: {}
-		}
-	}
+	// useEffect(() => {
+	// 	getUser()
+	// })
 
-	componentDidMount(){
-		this.getUser()
-	}
-
-	getUser = () => {
-		this.profileProvider.fetchProfile().then(
+	const getUser = () => {
+		profileProvider.fetchProfile().then(
 			(res) => {
-				this.setState({
-					user: res.data
-				})
+				setUser(res.data)
 			},
-			err => {
-				console.log(err);
+			error => {
+				// snackbar({
+				// 	id: 'error-get-user',
+				// 	title: 'Request Error',
+				// 	description: Message.REQUEST_ERROR,
+				// })
+				console.log(error);
 			}
 		)
 	}
 
-	logout = async (): Promise<void> => {
+	const logout = async (): Promise<void> => {
 		await localStorage.removeItem('token-api')
 		Router.replace('/')
 	}
 
-	render() {
-		return (
-			<div className="mb-15">
-				<Title name={this.props.title}></Title>
+	return (
+		<Box mb={5}>
+			<Title name={props.title}></Title>
 
-				<span className='float-right'>
-					<span className='mr-10'> Olá, <b>{this.state.user.name}</b></span> 	
-					<span className='link' onClick={this.logout}>[Sair]</span>
-				</span>
+			<span className='float-right'>
+				<span className='mr-10'> Olá, <b>{user.name}</b></span> 	
+				<span className='link' onClick={logout}>[Sair]</span>
+			</span>
 
-				<hr />
-				
-			</div>
-		)
-	}
-	
+			<hr />
+			
+		</Box>
+	)
 }
+
+export default HeaderPrivate

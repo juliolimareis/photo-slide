@@ -1,276 +1,265 @@
-import React, { ChangeEvent } from 'react'
-
 import Router from 'next/router'
-
-import { Photo } from '../models/Photo'
-
-import { ProfileProvider } from '../provider/ProfileProvider'
-
-import { Input, Text, Button, Grid, GridItem, Textarea, CircularProgress} from '@chakra-ui/react'
 import { AxiosError } from 'axios'
+import { Photo } from '../models/Photo'
+import { Message } from '../core/Messages'
+// import useSnackbar from '../core/useSnackbar'
+import React, { ChangeEvent, useEffect } from 'react'
+import { ProfileProvider } from '../provider/ProfileProvider'
+import { Input, Text, Button, Grid, GridItem, Textarea, CircularProgress, Box } from '@chakra-ui/react'
 
-export default class FormAddPhoto extends React.Component
-	<{beforeSend(): void}, 
-	{
-		photos: any[],
-		isLoading: boolean,
-		files: FileList | null,
-		messages: string[],
-		isError: boolean,
-	}>{
+const FormAddPhoto = (props: { beforeSend(): void }): JSX.Element => {
+	// const snackbar = useSnackbar()
 
-	mbText: string = '8px'
-	marginElement: string = '10px'
-	profileProvider = new ProfileProvider()
-	idAlbum = ""
+  const mbText: string = '8px'
+  const marginElement: string = '10px'
+  const profileProvider = new ProfileProvider()
 
-	constructor(props: any) {
-		super(props);
-		this.state = {
-			isError: false,
-			messages: [],
-			files: null,
-			isLoading: false,
-			photos: []
-		}
-	}
+  const [photo, setPhoto] = React.useState<Photo>({})
+  const [photos, setPhotos] = React.useState<Photo[] | any>([])
+  const [isLoading, setLoading] = React.useState<boolean>(false)
+  const [isError, setError] = React.useState<boolean>(false)
+  const [files, setFiles] = React.useState<FileList | null>()
+  const [messages, setMessages] = React.useState<string[]>([])
+  const [message, setMessage] = React.useState<string>("")
+  const [idAlbum, setIdAlbum] = React.useState<string>("")
 
-	componentDidMount(){
-		this.idAlbum = `${Router.query.id}`
-	}
+  useEffect(() => {
+    setIdAlbum(`${Router.query.id}`)
+  }, [])
 
-	setPhoto = (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>, fieldName: string, index: number) => {
+  useEffect(() => {
+    if (!isError) {
+      setMessages([])
+    }
+  }, [isError])
 
-		let photo: any = {}
-		
-		if(this.state.photos[index]){
-			photo = this.state.photos[index]
-		}
-		
-		photo[fieldName] = e.target.value
+  const handlePhoto = (
+    e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>,
+    fieldName: string, index: number
+  ): void => {
 
-		const photos: any = this.state.photos
+    let photo: any = {}
 
-		if(!this.state.photos[index]){
-			photos.push(photo)
-		}
-		
-		this.setState({
-			photos: photos
-		})
-	}
+    if (photos[index]) {
+      photo = photos[index]
+    }
 
-	setLoading = (isLoading: boolean) => {
-		this.setState({
-			isLoading: isLoading
-		})
-	}
+    photo[fieldName] = e.target.value
 
-	setError = (value: boolean): void => {
-		if(value){
-			this.setState({isError: value})
-		}else{
-			this.setState({
-				isError: false,
-				messages: []
-			})
-		}
-	} 
+    const _photos: any = photos
 
-	setFiles = (e: ChangeEvent<HTMLInputElement>): void => {
-		const photos = []
-		this.setError(false)
-		
-		if(e.target.files) {
-			for (let i = 0; i < e.target.files.length; i++) {
-				photos.push({
-					title: e.target.files[i].name.split('.')[0],
-				})
-			}
-		}
+    if (!photos[index]) {
+      _photos.push(photo)
+    }
 
-		this.setState({
-			files: e.target.files,
-			photos: photos
-		})
-	}
-	
-	uploadPhotos = async () => {
-		if(!this.idAlbum){
-			Router.replace('/home')
-		}
+    setPhotos(_photos)
+  }
 
-		this.setLoading(true)
+  const handleFiles = (e: ChangeEvent<HTMLInputElement>): void => {
+    const photos = []
+    setError(false)
 
-		let continueUpload = true
-		if(this.state.files) {
-			for (let i = 0; i < this.state.files.length && continueUpload; i++) {
-				let file = this.state.files[i];
-				let formData = new FormData();
-				formData.append("file", file);
-				
-				await this.profileProvider.uploadPhoto(this.idAlbum, formData).then(
-					res => {
-						this.updatePhoto(res.data, i)
-					},
-					(error: AxiosError) => {
-						let fileName = ''
-						if (this.state.files){
-							fileName = this.state.files[i].name
-						}
-						this.setMessageRequestError(error, fileName)
+    if (e.target.files) {
+      for (let i = 0; i < e.target.files.length; i++) {
+        photos.push({
+          title: e.target.files[i].name.split('.')[0],
+        })
+      }
+    }
+
+    setPhotos(photos)
+    setFiles(e.target.files)
+  }
+
+  const uploadPhotos = async () => {
+    if (!idAlbum) {
+      Router.replace('/home')
+    }
+
+    setLoading(true)
+
+    let continueUpload = true
+    if (files) {
+      for (let i = 0; i < files.length && continueUpload; i++) {
+        let file = files[i];
+        let formData = new FormData();
+        formData.append("file", file);
+
+        await profileProvider.uploadPhoto(idAlbum, formData).then(
+          (res: any) => {
+          updatePhoto(res.data, i)
+      	},
+				(error: AxiosError) => {
+					let fileName = ''
+					if (files) {
+						fileName = files[i].name
 					}
-				)
-			}
-		}
+					setMessageRequestError(error, fileName)
+				})
+    	}
+  	}
 
-		this.setLoading(false)
+		setLoading(false)
 
-		if(!this.state.isError){
-			this.props.beforeSend()
+		if (!isError) {
+			props.beforeSend()
 		}
 
 	}
 
-	updatePhoto = async (photo: Photo, index: number): Promise<boolean> => {
+	const updatePhoto = async (photo: Photo, index: number): Promise<boolean> => {
 		let isUpdate = true
 
-		photo.title = this.state.photos[index].title
-    photo.color = this.state.photos[index].color,
-    photo.description = this.state.photos[index].description,
-    photo.datetimeCreation = this.state.photos[index].datetimeCreation
+		photo.title = photos[index].title
+		photo.color = photos[index].color,
+			photo.description = photos[index].description,
+			photo.datetimeCreation = photos[index].datetimeCreation
 
-		await this.profileProvider
-		.updatePhoto(photo.idPhoto ?? 0, photo)
-		.catch(
-			(error: AxiosError) => {
+		await profileProvider.updatePhoto(photo.idPhoto ?? 0, photo)
+			.catch((error: AxiosError) => {
 				isUpdate = false
-				this.setMessageRequestError(error, photo.fileName)
+				setMessageRequestError(error, photo.fileName)
 			}
 		)
 		return isUpdate
 	}
-			
-	setMessageRequestError = (error: AxiosError, photoName?: string): void => {
+
+	const setMessageRequestError = (error: AxiosError, photoName?: string): void => {
 		let message = 'Erro desconhecido.'
-		
-		if(error.response?.status == 400) {
-			message = `${photoName} não pode ser enviada. O tamanho excede o limite de 1MB.`
+
+		if (error.response?.status == 400) {
+			// snackbar({
+			// 	description: Message.PHOTO_ERROR_SIZE.replace('{photoName}', photoName ?? "")
+			// })
+			message = Message.PHOTO_ERROR_SIZE.replace('{photoName}', photoName ?? "")
 		}
-		
-		this.setMessage([message])
-		this.setError(true)
+
+		setMessages([message])
+		setError(true)
 		console.log(error);
-
 	}
 
-	setMessage = (messages: string[]): void => {
-		this.setState({
-			messages: messages,
-		})
-	}
-	
-	getValue = (fieldName: string, index: number): string => {
-		if (this.state.photos[index] && this.state.photos[index][fieldName]){
-			return this.state.photos[index][fieldName]
-		}
-		return ''
+	const getValue = (fieldName: string, index: number): string => {
+		if (photos[index] && photos[index][fieldName]) {
+			return photos[index][fieldName]
+		} return ''
 	}
 
-	render() {
-		let messages = []
+	return (
+		<Box>
+			<GridItem rowSpan={4}>
+				<Text mb={mbText}>Escolher fotos:</Text>
+				<Input
+					onChange={handleFiles}
+					size='sm'
+					type='file'
+					multiple
+					accept=".jpg,.jpeg,.png"
+				/>
+			</GridItem>
 
-		for (let i = 0; i < this.state.messages.length; i++) {
-			messages.push(<Text key={i} color="orange">{this.state.messages[i]}</Text>)
-		}
+			<GridItem rowSpan={4}>
+				{messages}
+			</GridItem>
 
-		const gridForms: any = [];
+			<FormPhoto 
+				mbText={mbText}
+				photos={photos}
+				getValue={getValue}
+				handlePhoto={handlePhoto} 
+			/>
 
-		for (let i = 0; i < this.state.photos.length; i++) {
-			gridForms.push(
-				<Grid key={i}
+			<MessagesDanger messages={messages}/>
+
+			<GridItem className='text-center' mt='20px'>
+				{
+					isLoading ? 
+					<CircularProgress isIndeterminate /> :
+					photos.length > 0 ? <Button colorScheme='blue' w='200px' onClick={uploadPhotos}>Criar</Button> : <div></div>
+				}
+			</GridItem>
+
+		</Box>
+	)
+
+}
+
+const MessagesDanger = (props:{messages: string[]}): JSX.Element => (
+	<Box>
+		{props.messages.map(
+			(message: string, index: number) => (
+				<Text key={index} color="orange">{message}</Text>
+			)
+		)}
+	</Box>
+)
+
+const FormPhoto = (
+	props: { 
+		mbText: string, 
+		photos: Photo[],
+		getValue(title: string, index: number): string,
+		handlePhoto(e :React.ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>, title: string, index: number): void 
+	}): JSX.Element => (
+		<Box>
+			{props.photos.map((photo: Photo, i: number) => (
+				<Grid 
+					key={i}
 					p='20px'
 					templateRows='repeat(2, 1fr)'
 					templateColumns='repeat(1, 1fr)'
 					gap={2}
 				>
 					<GridItem rowSpan={4}>
-						<Text mb={this.mbText}>Titulo:</Text>
+						<Text mb={props.mbText}>Titulo:</Text>
 						<Input
-							value={this.getValue('title', i)}
-							onChange={(e) => {this.setPhoto(e, 'title', i)}}
+							value={props.getValue('title', i)}
+							onChange={(e) => { props.handlePhoto(e, 'title', i) }}
 							placeholder='titulo'
 							size='sm'
 						/>
 					</GridItem>
-
+			
 					<GridItem rowSpan={4}>
-						<Text mb={this.mbText}>Descrição:</Text>
+						<Text mb={props.mbText}>Descrição:</Text>
 						<Textarea
-							value={this.getValue('description', i)}
-							onChange={(e) => {this.setPhoto(e, 'description', i)}}
+							value={props.getValue('description', i)}
+							onChange={(e) => { props.handlePhoto(e, 'description', i) }}
 							placeholder='descrição'
 							type='textarea'
 							size='sm'
 						/>
 					</GridItem>
-
+			
 					<GridItem rowSpan={4}>
-						<Text mb={this.mbText}>Data/Hora de aquisição:</Text>
+						<Text mb={props.mbText}>Data/Hora de aquisição:</Text>
 						<Input
-							value={this.getValue('dateTimeCreation', i)}
-							onChange={(e) => {this.setPhoto(e, 'dateTimeCreation', i)}}
+							value={props.getValue('dateTimeCreation', i)}
+							onChange={(e) => { props.handlePhoto(e, 'dateTimeCreation', i) }}
 							placeholder='dd/mm/aaaa hh:mm:ss'
 							size='sm'
-							// type='datetime-local'
+						// type='datetime-local'
 						/>
 					</GridItem>
-					
+			
 					<GridItem rowSpan={4}>
-						<Text mb={this.mbText}>Cor predominante:</Text>
+						<Text mb={props.mbText}>Cor predominante:</Text>
 						<Input
-							value={this.getValue('color', i)}
-							onChange={(e) => {this.setPhoto(e, 'color', i)}}
+							value={props.getValue('color', i)}
+							onChange={(e) => { props.handlePhoto(e, 'color', i) }}
 							placeholder='#00000'
 							size='sm'
 						/>
 					</GridItem>
-
-					<GridItem>
-						<hr className="mt-20"/>
-					</GridItem>
-
-				</Grid>
-			)
-		}
-
-		return (
-			<div>
-				<GridItem rowSpan={4}>
-					<Text mb={this.mbText}>Escolher fotos:</Text>
-					<Input
-						onChange={(e) => {this.setFiles(e)}}
-						size='sm'
-						type='file'
-						multiple
-						accept=".jpg,.jpeg,.png"
-					/>
-				</GridItem>
-
-				<GridItem rowSpan={4}>
-					{messages}
-				</GridItem>
-
-				{gridForms}
 			
-				<GridItem className='text-center' mt='20px'>
-					{
-						this.state.isLoading ? <CircularProgress isIndeterminate/>	:
-						this.state.photos.length > 0 ? <Button colorScheme='blue' w='200px' onClick={this.uploadPhotos}>Criar</Button> : <div></div>
-					}
-				</GridItem>
+					<GridItem>
+						<hr className="mt-20" />
+					</GridItem>
+			
+				</Grid>
+				)
+			)}
+		</Box>
+	)
 
-			</div>
-		)
-	}
-}
+export default FormAddPhoto

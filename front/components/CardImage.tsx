@@ -3,19 +3,16 @@ import { Text } from '@chakra-ui/react'
 
 import style from '../styles/Global.module.scss'
 
-export default class CardImage extends React.Component<{ url?: string, title?: string, desc?: string }, {}>{
+export default function CardImage(props: { url?: string, title?: string, desc?: string }) {
+	return (
+		<div className='float-left'>
+			<img
+				className={style.card} 
+				src={props.url}
+				alt={props.desc} />
 
-	render() {
-		return (
-			<div className='float-left'>
-				<img
-					className={style.card} 
-					src={this.props.url}
-					alt={this.props.desc} />
-
-				<Text className='text-center'><b>{this.props.title}</b></Text>
-				<Text className='text-center'><i>{this.props.desc}</i></Text>
-			</div>
-		)
-	}
+			<Text className='text-center'><b>{props.title}</b></Text>
+			<Text className='text-center'><i>{props.desc}</i></Text>
+		</div>
+	)
 }

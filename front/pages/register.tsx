@@ -42,7 +42,7 @@ export default class RegisterPage extends React.Component
 		}
 	}
 
-	setResgiter = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, fieldName: string): void => {
+	setRegister = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, fieldName: string): void => {
 		const register: any = this.state.register
 		register[fieldName] = e.target.value
 		
@@ -149,7 +149,7 @@ export default class RegisterPage extends React.Component
 						<Text mb={this.mbText}>Nome:</Text>
 						<Input
 							value={this.state.register.name}
-							onChange={(e) => this.setResgiter(e, 'name')}
+							onChange={(e) => this.setRegister(e, 'name')}
 							placeholder='nome'
 							size='sm'
 						/>
@@ -159,7 +159,7 @@ export default class RegisterPage extends React.Component
 						<Text mb={this.mbText}>E-mail:</Text>
 						<Input
 							value={this.state.register.email}
-							onChange={(e) => this.setResgiter(e, 'email')}
+							onChange={(e) => this.setRegister(e, 'email')}
 							placeholder='E-mail'
 							type='email'
 							size='sm'
@@ -170,7 +170,7 @@ export default class RegisterPage extends React.Component
 						<Text mb={this.mbText}>Senha:</Text>
 						<Input
 							value={this.state.register.password}
-							onChange={(e) => this.setResgiter(e, 'password')}
+							onChange={(e) => this.setRegister(e, 'password')}
 							placeholder='Senha'
 							type='password'
 							size='sm'

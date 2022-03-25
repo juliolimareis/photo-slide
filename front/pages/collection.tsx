@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Router from 'next/router'
 
 import { Photo } from '../models/Photo'
@@ -16,61 +16,41 @@ import { getUrl } from '../config/api'
 import { withAuth } from '../config/withAuth'
 import { ProfileProvider } from '../provider/ProfileProvider'
 
-import { Container, Text, Button, Grid, GridItem, Table, Tr, Thead, Th, Tbody, Td, CircularProgress} from '@chakra-ui/react'
+import { Container, Text, Button, Grid, GridItem, Table, Tr, Thead, Th, Tbody, Td, CircularProgress, Box} from '@chakra-ui/react'
 
-export default class CollectionPage extends React.Component
-	<{}, 
-	{ 
-		album: Album, 
-		photos: Photo[], 
-		isTable: boolean,
-		isLoading: boolean,
-		photoSelected: Photo,
-		isOpenModalPhoto: boolean,
-		isOpenModalAddPhoto: boolean,
-	}>{
+const urlImage = `${getUrl()}/image`
 
-	idAlbum = ''
-	profileProvider = new ProfileProvider()
-	urlImage = `${getUrl()}/image`
-	
-	constructor(props: any) {
-		super(props);
-		this.state = {
-			isTable: false,
-			isLoading: true,
-			photoSelected: {},
-			isOpenModalPhoto: false,
-			isOpenModalAddPhoto: false,
-			photos: [],
-			album: {
-				title: '',
-				description: '',
-			}
-		}
-	}
+const Collection = () => {
 
-	componentDidMount() {
-		withAuth().then(res => {
-			if (res){
-				if(Router.query.id){
-					this.idAlbum = `${Router.query.id}`
-					this.getPhotos()
-					this.getAlbum()
-				}else{
-					Router.replace('/home')
-				}
-			}
-		})
+	const [album, setAlbum] = useState<Album>({})
+	const [photos, setPhotos] = useState<Photo[]>([])
+	const [idAlbum, setIdAlbum] = useState<string>("")
+	const [isTable, setTable] = useState<boolean>(false)
+	const [isLoading, setLoading] = useState<boolean>(false)
+	const [photoSelected, setPhotoSelected] = useState<Photo>({})
+	const [isOpenModalPhoto, setOpenModalPhoto] = useState<boolean>(false)
+	const [isOpenModalAddPhoto, setOpenModalAddPhoto] = useState<boolean>(false)
 
-	}
+	const profileProvider = new ProfileProvider()
 
-	getAlbum = () => {
-		this.profileProvider.fetchAlbum(`${this.idAlbum}`).then(
+	// useEffect( () => {
+	// 	withAuth().then(res => {
+	// 		if (res){
+	// 			if(Router.query.id){
+	// 				setIdAlbum(`${Router.query.id}`)
+	// 				getPhotos()
+	// 				getAlbum()
+	// 			}else{
+	// 				Router.replace('/home')
+	// 			}
+	// 		}
+	// 	})
+	// },[])
+
+	const getAlbum = () => {
+		profileProvider.fetchAlbum(`${idAlbum}`).then(
 			res => {
-				this.setState({
-					album: res.data
-				})
+				setAlbum(res.data)
 			},
 			err => {
 				console.log(err);
@@ -78,10 +58,10 @@ export default class CollectionPage extends React.Component
 		)
 	}
 	
-	deletePhoto = (id: number) => {
-		this.profileProvider.deletePhoto(id).then(
+	const deletePhoto = (id: number) => {
+		profileProvider.deletePhoto(id).then(
 			() => {
-				this.onClosePhoto()
+				onClosePhoto()
 			},
 			err => {
 				console.log(err);
@@ -89,8 +69,8 @@ export default class CollectionPage extends React.Component
 		)
 	}
 	
-	deleteAlbum = () => {
-		this.profileProvider.deleteAlbum(this.idAlbum).then(
+	const deleteAlbum = () => {
+		profileProvider.deleteAlbum(idAlbum).then(
 			() => {
 				Router.replace('/home')
 			},
@@ -100,174 +80,159 @@ export default class CollectionPage extends React.Component
 		)
 	}
 
-	getPhotos = () => {		
-		this.profileProvider.fechPhotos(`${this.idAlbum}`).then(
+	const getPhotos = () => {		
+		profileProvider.fechPhotos(`${idAlbum}`).then(
 			res => {
-				this.setState({ photos: res.data, isLoading: false })
+				setPhotos(res.data)
 			},
 			err => {
 				console.log(err);
 			}
-		)
-	}
-
-	setTable = (value: boolean) => {
-		this.setState({
-			isTable: value
-		})
+		).finally(() => setLoading(false))
 	}
 	
-	setPhotoSlected = (photo: Photo) => {
-		this.setState({photoSelected: photo, isOpenModalPhoto: true})
+	const handlePhotoSelected = (_photo: Photo) => {
+		setPhotoSelected(_photo)
+		setOpenModalPhoto(true)
 	}
 
-	setOpenModalAddPhoto = (value: boolean): void => {
-		this.setState({
-			isOpenModalAddPhoto: value
-		})
+	const onOpen = (): void => {
+		setOpenModalAddPhoto(true)
+	}
+
+	const onCloseAddPhoto = (): void => {
+		getPhotos()
+		setOpenModalAddPhoto(false)
 	}
 	
-	setOpenModalPhoto = (value: boolean): void => {
-		this.setState({
-			isOpenModalPhoto: value
-		})
+	const onClosePhoto = (): void => {
+		getPhotos()
+		setOpenModalPhoto(false)
 	}
 
-	onOpen = (): void => {
-		this.setOpenModalAddPhoto(true)
-	}
-
-	onCloseAddPhoto = (): void => {
-		this.getPhotos()
-		this.setOpenModalAddPhoto(false)
-	}
-	
-	onClosePhoto = (): void => {
-		this.getPhotos()
-		this.setOpenModalPhoto(false)
-	}
-
-	onBack=() => {
+	const onBack = () => {
 		Router.back()
 	}
 
-	render() {
-		const table = []
-		const photos = []
+	return (
+		<div className='p-20'>
+			<ArrowBackIcon className='click' w={6} h={6} onClick={onBack}/> 
+			<HeaderPrivate title='Meus álbuns de fotos'></HeaderPrivate>
 
-		for (let i = 0; i < this.state.photos.length; i++) {
-			photos.push(
-				<span key={i} onClick={() => this.setPhotoSlected(this.state.photos[i])}>
-					<CardPhoto 
-						title={this.state.photos[i].title}
-						desc={this.state.photos[i].description}
-						url={`${this.urlImage}/${this.state.photos[i].serverName}`}
-					></CardPhoto>
+			<div className="mb-15">
+				<Text fontSize='24px'>{album.title}</Text>
+				
+				<span className='mr-5'>{album.description}</span> 
+
+				<span className='float-right'>
+					<span>
+						Visualizar como:
+						<span className='link' onClick={() => setTable(false)}> Miniatura </span>
+						/
+						<span className='link' onClick={() => setTable(true)}> Tabela </span>
+					</span>
 				</span>
-			)
-			
-			table.push(
-				<Tr key={i} className="click" onClick={() => this.setPhotoSlected(this.state.photos[i])}>
-					<Td>{this.state.photos[i].fileName}</Td>
-					<Td isNumeric>{this.state.photos[i].size}</Td>
-					<Td>{this.state.photos[i].datetimeCreation}</Td>
-					<Td>{this.state.photos[i].color}</Td>
-				</Tr>
-			)
-		}
+				
+			</div>
 
-		return (
-			<div className='p-20'>
-				 <ArrowBackIcon className='click' w='6' h='6' onClick={this.onBack}/> 
-				 <HeaderPrivate title='Meus álbuns de fotos'></HeaderPrivate>
+			<Grid
+				mt='30px'
+				templateRows='repeat(1, 1fr)'
+				templateColumns='repeat(1, 1fr)'
+			>
+				<Container className={isLoading ? 'text-center' : 'hidden'}>
+					<CircularProgress isIndeterminate/>	
+				</Container>
 
-				<div className="mb-15">
-					<Text fontSize='24px'>{this.state.album.title}</Text>
-					
-					<span className='mr-5'>{this.state.album.description}</span> 
+				<GridItem mb={15} className={isLoading ? 'hidden': 'm-a'}>
+					{
+						isTable ? <TablePhoto photos={photos} setPhotoSelected={setPhotoSelected}/>	
+						: <CardsPhoto photos={photos} setPhotoSelected={setPhotoSelected}/>
+					}
+				</GridItem>
 
-					<span className='float-right'>
-						<span>
-							Visualizar como:
-							<span className='link' onClick={() => this.setTable(false)}> Miniatura </span>
-							/
-							<span className='link' onClick={() => this.setTable(true)}> Tabela</span>
+				<GridItem className='footer' mb={15}>
+					<span>
+						<span className='float-left p-20'>
+							<Button
+								w={200}
+								colorScheme='red'
+								onClick={deleteAlbum}
+							>Excluir album
+							</Button>
+						</span>				
+						
+						<span className='float-right p-20'>
+							<Button
+								colorScheme='blue'
+								w={200}
+								onClick={onOpen}
+							>Adicionar Fotos
+							</Button>		
 						</span>
 					</span>
-					
-				</div>
+				</GridItem>
+			</Grid>
 
-				<Grid
-					mt='30px'
-					templateRows='repeat(1, 1fr)'
-					templateColumns='repeat(1, 1fr)'
-				>
-
-					<Container className={ this.state.isLoading ? 'text-center' : 'hidden'}>
-						<CircularProgress isIndeterminate/>	
-					</Container>
-
-					<GridItem mb="15px" className={ this.state.isLoading ? 'hidden': 'm-a'}>
-						{
-							this.state.isTable ? 
-								<Table variant='striped' colorScheme='blue'>		
-									<Thead>
-										<Tr>
-											<Th>Foto</Th>
-											<Th>Tamanho</Th>
-											<Th>Data de aquisição</Th>
-											<Th>Cor predominante</Th>
-										</Tr>
-									</Thead>
-									<Tbody>
-										{table}
-									</Tbody>
-								</Table> 
-							: photos
-						}
-
-					</GridItem>
-
-					<GridItem className='footer' mb="15px">
-						<span>
-							<span className='float-left p-20'>
-								<Button
-									colorScheme='red'
-									w='200px'
-									onClick={this.deleteAlbum}
-								>Excluir album
-								</Button>
-							</span>				
-							
-							<span className='float-right p-20'>
-								<Button
-									colorScheme='blue'
-									w='200px'
-									onClick={this.onOpen}
-								>Adicionar Fotos
-								</Button>		
-							</span>
-						</span>
-					</GridItem>
-				</Grid>
-
-				<ModalComponent 
-					onClose={this.onCloseAddPhoto}
-					isOpen={this.state.isOpenModalAddPhoto}
-					title="Adicionar Fotos"
-					body={<FormAddPhoto beforeSend={this.onCloseAddPhoto} ></FormAddPhoto>}>
-				</ModalComponent>
-				
-				<ModalComponent 
-					size='5xl'
-					onClose={this.onClosePhoto}
-					isOpen={this.state.isOpenModalPhoto}
-					title={this.state.photoSelected.title}
-					body={<ImageComponent photo={this.state.photoSelected}></ImageComponent>}
-					footer={ <Button w='200px' colorScheme='red' onClick={()=> this.deletePhoto(this.state.photoSelected.idPhoto ?? 0)}>Excluir foto </Button> }
-					></ModalComponent>
-			</div>
+			<ModalComponent 
+				onClose={onCloseAddPhoto}
+				isOpen={isOpenModalAddPhoto}
+				title="Adicionar Fotos"
+				body={<FormAddPhoto beforeSend={onCloseAddPhoto} ></FormAddPhoto>}>
+			</ModalComponent>
 			
-		)
-	}
+			<ModalComponent 
+				size='5xl'
+				onClose={onClosePhoto}
+				isOpen={isOpenModalPhoto}
+				title={photoSelected.title}
+				body={<ImageComponent photo={photoSelected} ></ImageComponent>}
+				footer={ <Button w='200px' colorScheme='red' onClick={()=> deletePhoto(photoSelected.idPhoto ?? 0)}>Excluir foto </Button> }
+				></ModalComponent>
+		</div>
+		
+	)
 }
+
+const CardsPhoto = (props: { photos: Photo[], setPhotoSelected(photo: Photo): void }) => (
+	<Box>
+		{props.photos.map((photo, i) => 
+			<span key={i} onClick={() => props.setPhotoSelected(photo)}>
+				<CardPhoto 
+					title={photo.title}
+					desc={photo.description}
+					url={`${urlImage}/${photo.serverName}`}
+				></CardPhoto>
+			</span>
+		)}
+	</Box>
+)
+
+const TablePhoto = (props: { photos: Photo[], setPhotoSelected(photo: Photo): void }) => (
+	<Table variant='striped' colorScheme='blue'>		
+		<Thead>
+			<Tr>
+				<Th>Foto</Th>
+				<Th>Tamanho</Th>
+				<Th>Data de aquisição</Th>
+				<Th>Cor predominante</Th>
+			</Tr>
+		</Thead>
+		<Tbody>
+			{props.photos.map((photo, i) => 
+				<Tr 
+					key={i} 
+					className="click" 
+					onClick={() => props.setPhotoSelected(photo)}
+				>
+					<Td>{photo.fileName}</Td>
+					<Td isNumeric>{photo.size}</Td>
+					<Td>{photo.datetimeCreation}</Td>
+					<Td>{photo.color}</Td>
+				</Tr>
+			)}
+		</Tbody>
+	</Table> 
+)
+
+export default Collection
