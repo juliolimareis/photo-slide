@@ -34,7 +34,7 @@ export class ProfileProvider {
 		return await api.post<Photo>(`/profile/album/${idAlbum}/photo/upload`, photo, {headers: getHeaders()})
 	}
 	
-	async fechPhotos(idAlbum: string): Promise<AxiosResponse<Photo[]>> {
+	async fetchPhotos(idAlbum: string): Promise<AxiosResponse<Photo[]>> {
 		return await api.get<Photo[]>(`/profile/album/${idAlbum}/photo`, {headers: getHeaders()})
 	}
 	

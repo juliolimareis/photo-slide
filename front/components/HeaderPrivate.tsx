@@ -7,50 +7,50 @@ import { Message } from '../core/Messages'
 // import useSnackbar from '../core/useSnackbar'
 import { Box } from '@chakra-ui/react'
 
-const HeaderPrivate = (props: {title: string}): JSX.Element => {
-	// const snackbar = useSnackbar()
+const HeaderPrivate = (props: { title: string }): JSX.Element => {
+  // const snackbar = useSnackbar()
 
-	const profileProvider = new ProfileProvider()
-	const [user, setUser] = React.useState<User>({})
+  const profileProvider = new ProfileProvider()
+  const [user, setUser] = React.useState<User>({})
 
-	// useEffect(() => {
-	// 	getUser()
-	// })
+  // useEffect(() => {
+  // 	getUser()
+  // })
 
-	const getUser = () => {
-		profileProvider.fetchProfile().then(
-			(res) => {
-				setUser(res.data)
-			},
-			error => {
-				// snackbar({
-				// 	id: 'error-get-user',
-				// 	title: 'Request Error',
-				// 	description: Message.REQUEST_ERROR,
-				// })
-				console.log(error);
-			}
-		)
-	}
+  const getUser = () => {
+    profileProvider.fetchProfile().then(
+      (res) => {
+        setUser(res.data)
+      },
+      error => {
+        // snackbar({
+        // 	id: 'error-get-user',
+        // 	title: 'Request Error',
+        // 	description: Message.REQUEST_ERROR,
+        // })
+        console.log(error);
+      }
+    )
+  }
 
-	const logout = async (): Promise<void> => {
-		await localStorage.removeItem('token-api')
-		Router.replace('/')
-	}
+  const logout = async (): Promise<void> => {
+    await localStorage.removeItem('token-api')
+    Router.replace('/')
+  }
 
-	return (
-		<Box mb={5}>
-			<Title name={props.title}></Title>
+  return (
+    <Box mb={5}>
+      <Title name={props.title}></Title>
 
-			<span className='float-right'>
-				<span className='mr-10'> Olá, <b>{user.name}</b></span> 	
-				<span className='link' onClick={logout}>[Sair]</span>
-			</span>
+      <span className='float-right'>
+        <span className='mr-10'> Olá, <b>{user.name}</b></span>
+        <span className='link' onClick={logout}>[Sair]</span>
+      </span>
 
-			<hr />
-			
-		</Box>
-	)
+      <hr />
+
+    </Box>
+  )
 }
 
 export default HeaderPrivate

@@ -1,58 +1,32 @@
-import React, { ReactElement } from "react"
+import React, { ReactElement, ReactNode } from "react"
 import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/react"
 
-export default class ModalComponent extends React.Component
-	<{
+const ModalComponent = (
+	props: {
 		size?: string,
-		title?: string, 
+		title?: string,
 		isOpen: boolean,
-		body?: ReactElement,
-		footer?: ReactElement,
+		body?: ReactNode,
+		footer?: ReactNode,
 		onClose(): void
-	}, any>{
+	}): JSX.Element => (
+  <Modal isOpen={props.isOpen} onClose={props.onClose} size={props.size}>
+    <ModalOverlay />
 
-	private _isOpen = false;
-	private _isClose = false;
+    <ModalContent>
+      <ModalHeader>{props.title}</ModalHeader>
 
-	getOpen() {
-		return this._isOpen
-	}
-	
-	setOpen(value: boolean) {
-		this._isOpen = value
-	}
-	
-	getClose() {
-		return this._isClose
-	}
-	
-	setClose(value: boolean) {
-		this._isClose = value
-	}
+      <ModalCloseButton />
 
-	close = (): void => {
-		// this.setOpen(false)
-		// this.setClose(true)
-		this.setState({})
-		this.props.onClose()
-	}
+      <ModalBody>
+        {props.body}
+      </ModalBody>
 
-	render() {
-		return (
-			<Modal isOpen={this.props.isOpen} onClose={this.props.onClose} size={this.props.size}>
-				<ModalOverlay/>
-				<ModalContent>
-					<ModalHeader>{this.props.title}</ModalHeader>
-					<ModalCloseButton/>
-					<ModalBody>
-						{this.props.body}
-					</ModalBody>
+      <ModalFooter>
+        {props.footer}
+      </ModalFooter>
 
-					<ModalFooter>
-						{this.props.footer}
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
-		)
-	}
-}
+    </ModalContent>
+  </Modal>
+)
+export default ModalComponent

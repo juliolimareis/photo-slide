@@ -1,30 +1,27 @@
-import React, { useEffect, useState } from 'react'
-import Router from 'next/router'
-
+import Router, { useRouter } from 'next/router'
+import { getUrl } from '../config/api'
 import { Photo } from '../models/Photo'
 import { Album } from '../models/Album'
-
+import { withAuth } from '../config/withAuth'
 import CardPhoto from '../components/CardImage'
 import ModalComponent from '../components/Modal'
+import { ArrowBackIcon } from '@chakra-ui/icons'
+import React, { useEffect, useState } from 'react'
 import FormAddPhoto from '../components/FormAddPhoto'
 import HeaderPrivate from '../components/HeaderPrivate'
 import ImageComponent from '../components/ImageComponent'
-
-import { ArrowBackIcon } from '@chakra-ui/icons'
-
-import { getUrl } from '../config/api'
-import { withAuth } from '../config/withAuth'
 import { ProfileProvider } from '../provider/ProfileProvider'
-
 import { Container, Text, Button, Grid, GridItem, Table, Tr, Thead, Th, Tbody, Td, CircularProgress, Box} from '@chakra-ui/react'
+import useAlert from '../core/useAlert'
+import useAlertRequest from '../core/useErrorRequest'
 
 const urlImage = `${getUrl()}/image`
 
 const Collection = () => {
+	const errorRequest = useAlertRequest()
 
 	const [album, setAlbum] = useState<Album>({})
 	const [photos, setPhotos] = useState<Photo[]>([])
-	const [idAlbum, setIdAlbum] = useState<string>("")
 	const [isTable, setTable] = useState<boolean>(false)
 	const [isLoading, setLoading] = useState<boolean>(false)
 	const [photoSelected, setPhotoSelected] = useState<Photo>({})
@@ -33,26 +30,27 @@ const Collection = () => {
 
 	const profileProvider = new ProfileProvider()
 
-	// useEffect( () => {
-	// 	withAuth().then(res => {
-	// 		if (res){
-	// 			if(Router.query.id){
-	// 				setIdAlbum(`${Router.query.id}`)
-	// 				getPhotos()
-	// 				getAlbum()
-	// 			}else{
-	// 				Router.replace('/home')
-	// 			}
-	// 		}
-	// 	})
-	// },[])
+	const router = useRouter()
+  const { id } = router.query
+
+	useEffect(() => {
+		withAuth().then(isAuth => {
+			if (isAuth){
+				getPhotos()
+				getAlbum()
+			}else{
+				Router.replace('/home')
+			}
+		})
+	},[])
 
 	const getAlbum = () => {
-		profileProvider.fetchAlbum(`${idAlbum}`).then(
+		profileProvider.fetchAlbum(id as string).then(
 			res => {
 				setAlbum(res.data)
 			},
 			err => {
+				errorRequest(err)
 				console.log(err);
 			}
 		)
@@ -64,28 +62,31 @@ const Collection = () => {
 				onClosePhoto()
 			},
 			err => {
+				errorRequest(err)
 				console.log(err);
 			}
 		)
 	}
 	
 	const deleteAlbum = () => {
-		profileProvider.deleteAlbum(idAlbum).then(
+		profileProvider.deleteAlbum(id as string).then(
 			() => {
 				Router.replace('/home')
 			},
 			err => {
+				errorRequest(err)
 				console.log(err);
 			}
 		)
 	}
 
 	const getPhotos = () => {		
-		profileProvider.fechPhotos(`${idAlbum}`).then(
+		profileProvider.fetchPhotos(id as string).then(
 			res => {
 				setPhotos(res.data)
 			},
 			err => {
+				errorRequest(err)
 				console.log(err);
 			}
 		).finally(() => setLoading(false))
@@ -115,25 +116,25 @@ const Collection = () => {
 	}
 
 	return (
-		<div className='p-20'>
+		<Box p={"20px"}>
 			<ArrowBackIcon className='click' w={6} h={6} onClick={onBack}/> 
 			<HeaderPrivate title='Meus álbuns de fotos'></HeaderPrivate>
 
-			<div className="mb-15">
+			<Box mb="15px">
 				<Text fontSize='24px'>{album.title}</Text>
 				
-				<span className='mr-5'>{album.description}</span> 
+				<Box as='span' mr="5px" >{album.description}</Box> 
 
-				<span className='float-right'>
-					<span>
+				<Box className='float-right'>
+					<Box as='span'>
 						Visualizar como:
-						<span className='link' onClick={() => setTable(false)}> Miniatura </span>
+						<Box as='span' className='link' onClick={() => setTable(false)}> Miniatura </Box>
 						/
-						<span className='link' onClick={() => setTable(true)}> Tabela </span>
-					</span>
-				</span>
+						<Box as='span' className='link' onClick={() => setTable(true)}> Tabela </Box>
+					</Box>
+				</Box>
 				
-			</div>
+			</Box>
 
 			<Grid
 				mt='30px'
@@ -146,50 +147,58 @@ const Collection = () => {
 
 				<GridItem mb={15} className={isLoading ? 'hidden': 'm-a'}>
 					{
-						isTable ? <TablePhoto photos={photos} setPhotoSelected={setPhotoSelected}/>	
-						: <CardsPhoto photos={photos} setPhotoSelected={setPhotoSelected}/>
+						isTable ? <TablePhoto photos={photos} setPhotoSelected={handlePhotoSelected}/>	
+						: <CardsPhoto photos={photos} setPhotoSelected={handlePhotoSelected}/>
 					}
 				</GridItem>
 
 				<GridItem className='footer' mb={15}>
-					<span>
-						<span className='float-left p-20'>
+					<Box as='span'>
+						<Box as='span' className='float-left p-20'>
 							<Button
 								w={200}
 								colorScheme='red'
 								onClick={deleteAlbum}
 							>Excluir album
 							</Button>
-						</span>				
+						</Box>				
 						
-						<span className='float-right p-20'>
+						<Box as='span' className='float-right p-20'>
 							<Button
 								colorScheme='blue'
 								w={200}
 								onClick={onOpen}
 							>Adicionar Fotos
 							</Button>		
-						</span>
-					</span>
+						</Box>
+					</Box>
 				</GridItem>
 			</Grid>
 
 			<ModalComponent 
+				title="Adicionar Fotos"
 				onClose={onCloseAddPhoto}
 				isOpen={isOpenModalAddPhoto}
-				title="Adicionar Fotos"
-				body={<FormAddPhoto beforeSend={onCloseAddPhoto} ></FormAddPhoto>}>
-			</ModalComponent>
+				body={<FormAddPhoto beforeSend={onCloseAddPhoto} />}
+			/>
 			
 			<ModalComponent 
 				size='5xl'
 				onClose={onClosePhoto}
 				isOpen={isOpenModalPhoto}
 				title={photoSelected.title}
-				body={<ImageComponent photo={photoSelected} ></ImageComponent>}
-				footer={ <Button w='200px' colorScheme='red' onClick={()=> deletePhoto(photoSelected.idPhoto ?? 0)}>Excluir foto </Button> }
-				></ModalComponent>
-		</div>
+				body={<ImageComponent photo={photoSelected}/>}
+				footer={ 
+					<Button 
+						w='200px' 
+						colorScheme='red' 
+						onClick={()=> deletePhoto(photoSelected.idPhoto ?? 0)}
+					>
+						Excluir foto 
+					</Button> 
+				}
+				/>
+		</Box>
 		
 	)
 }

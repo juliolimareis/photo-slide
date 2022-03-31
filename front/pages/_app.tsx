@@ -3,12 +3,10 @@ import { ChakraProvider } from '@chakra-ui/react'
 
 import '../styles/helpers.scss'
 
-function MyApp({ Component, pageProps }: AppProps) {
-  return (
-		<ChakraProvider>
-			<Component {...pageProps} />
-		</ChakraProvider>
-	) 
-}
+const MyApp = ({ Component, pageProps }: AppProps) => (
+  <ChakraProvider>
+    <Component {...pageProps} />
+  </ChakraProvider>
+)
 
 export default MyApp

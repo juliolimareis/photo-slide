@@ -1,171 +1,160 @@
-import React, { ChangeEvent } from 'react'
-import Router from 'next/router'
-
 import Link from 'next/link'
-
-import { Auth } from '../models/Auth'
-import { AuthProvider } from '../provider/AuthProvider'
-
-import { Container, Input, Text, Button, Grid, GridItem, CircularProgress } from '@chakra-ui/react'
+import Router from 'next/router'
 import { AxiosError } from 'axios'
+import { Auth } from '../models/Auth'
+import useAlert from '../core/useAlert'
+import React, { ChangeEvent } from 'react'
 import { isEmail, isEmpty } from '../utils'
+import { AuthProvider } from '../provider/AuthProvider'
+import { Container, Input, Text, Button, Grid, GridItem, CircularProgress, Box, useToast } from '@chakra-ui/react'
+import { Message } from '../core/Messages'
 
-export default class LoginPage extends React.Component<{}, {auth: Auth, isLoading: boolean, messages: string[]}>{
-	mbText: string = '8px'
-	marginElement: string = '10px'
 
-	authProvider: AuthProvider = new AuthProvider()
+const LoginPage = () => {
+	const mbText: string = '8px'
+	const marginElement: string = '10px'
+	const alert = useAlert()
 
-	constructor(props: any) {
-		super(props);
-		
-		this.state = {
-			messages: [],
-			isLoading: false,
-			auth: {
-				username: '',
-				password: ''
-			}
-		}
-	}
+	const authProvider: AuthProvider = new AuthProvider()
 
-	onLogin = (): void => {
-		this.authProvider.auth(this.state.auth).then(
+	const [auth, setAuth] = React.useState<Auth>({
+		username: '',
+		password: ''
+	})
+
+	const [isLoading, setLoading] = React.useState<boolean>(false)
+
+	const onLogin = (): void => {
+		setLoading(true)
+		authProvider.auth(auth).then(
 			response => {
+				alert('success', Message.REGISTER_SUCCESS)
 				localStorage.setItem('token-api', response.data.token)
 				Router.replace('/home')
 			},
 			(error: AxiosError) => {
-				this.setMessageRequestError(error)
+				handleRequestError(error)
 				console.log(error);
 			}
-		)
+		).finally(() => setLoading(false))
 	}
 
-	setAuth = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, fieldName: string): void => {
-		const auth: any = this.state.auth
-		auth[fieldName] = e.target.value
-		
-		this.setState({
-			auth: auth
+	const handleAuth = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+		setAuth({
+			...auth,
+			[e.target.name]: e.target.value
 		})
 	}
 
-	validate = (): void => {
-		let messages = []
-		
-		if(isEmpty(this.state.auth.username) || !isEmail(this.state.auth.username)) {
-			messages.push('* e-mail inválido')
-		}
-		
-		if(isEmpty(this.state.auth.password) || this.state.auth.password.length < 6) {
-			messages.push('* senha deve conter pelo menos 6 caracteres')
-		}
+	const validate = (): boolean => {
 
-		if(messages.length > 0) {
-			this.setMessage(messages)
+		if (isEmpty(auth.username) || !isEmail(auth.username)) {
+			alert('warning', Message.INVALID_EMAIL)
+			return false
+		}
+		
+		if (isEmpty(auth.password) || auth.password.length < 6) {
+			alert('warning', Message.INVALID_PASSWORD)
+			return false
+		}
+		
+		onLogin()
+		return true
+	}
+
+	const handleRequestError = (error: AxiosError): void => {
+		if (error.response?.status === 500) {
+			alert('error', Message.INTERNAL_SERVER_ERROR)
+		}else if (error.response?.status === 403) {
+			alert('error', Message.REQUEST_LOGIN_403)
 		}else{
-			this.onLogin()
-		}
-
-	}
-
-	setMessage = (messages: string[]): void => {
-		this.setState({
-			messages: messages,
-		})
-	}
-
-	setMessageRequestError = (error: AxiosError): void => {
-		let message = ''
-
-		if(error.response?.status === 500) {
-			message = 'Erro desconhecido'
-		}
-		
-		if(error.response?.status === 403) {
-			message = 'Usuário ou senha inválidos'
-		}
-
-		this.setMessage([message])
-
-	}
-
-	onPressEnter = (e: any): void => {
-		if(e.key == 'Enter'){
-			this.validate()
+			alert('error', Message.ERROR_UNKNOWN)
 		}
 	}
 
-	render() {
-		let messages = []
-
-		for (let i = 0; i < this.state.messages.length; i++) {
-			messages.push(<Text key={i} color="orange">{this.state.messages[i]}</Text>)
+	const onPressEnter = (e: any): void => {
+		if (e.key == 'Enter') {
+			validate()
 		}
+	}
 
-		return (
-			<Container 
-				p="1" 
-				marginTop='20' 
-				border='2px solid rgba(0, 0, 0, 0.05)'
-				onKeyDown={this.onPressEnter}
+	return (
+		<Container
+			p="1"
+			marginTop='20'
+			border='2px solid rgba(0, 0, 0, 0.05)'
+			onKeyDown={onPressEnter}
+		>
+			<Grid
+				p='20px'
+				templateRows='repeat(2, 1fr)'
+				templateColumns='repeat(1, 1fr)'
+				gap={2}
 			>
-				<Grid
-					p='20px'
-					templateRows='repeat(2, 1fr)'
-					templateColumns='repeat(1, 1fr)'
-					gap={2}
-				>
-					<GridItem mb="15px">
-						<h1 className='title text-center'>Photo Slide</h1>
-					</GridItem>
+				<GridItem mb="15px">
+					<h1 className='title text-center'>Photo Slide</h1>
+				</GridItem>
 
-					<GridItem rowSpan={4}>
-						<Text mb={this.mbText}>Login</Text>
-						<Input
-							value={this.state.auth.username}
-							onChange={(e) => {this.setAuth(e, 'username')}}
-							placeholder='Login'
-							size='sm'
-						/>
-					</GridItem>
+				<GridItem rowSpan={4}>
+					<Text mb={mbText}>Login</Text>
+					<Input
+						name='username'
+						value={auth.username}
+						onChange={handleAuth}
+						placeholder='Login'
+						size='sm'
+					/>
+				</GridItem>
 
-					<GridItem rowSpan={4}>
-						<Text mb={this.mbText}>Senha</Text>
-						<Input
-							value={this.state.auth.password}
-							onChange={(e) => {this.setAuth(e, 'password')}}
-							placeholder='senha'
-							type='password'
-							size='sm'
-						/>
-					</GridItem>
+				<GridItem rowSpan={4}>
+					<Text mb={mbText}>Senha</Text>
+					<Input
+						name='password'
+						value={auth.password}
+						onChange={handleAuth}
+						placeholder='senha'
+						type='password'
+						size='sm'
+					/>
+				</GridItem>
 
-					<GridItem className='text-center' mt='30px'>
-						{messages}
-					</GridItem>
-					
-					<GridItem className='text-center' mt='30px'>
-						<Link href="/register">
-							<a className='link'>Cadastre-se</a>
-						</Link>
-					</GridItem>
+				<GridItem className='text-center' mt='30px'>
+					<Link href="/register">
+						<a className='link'>Cadastre-se</a>
+					</Link>
+				</GridItem>
 
-					<GridItem className='text-center' mt='20px'>
-						<Link href='/home'>
-							{ this.state.isLoading ? <CircularProgress isIndeterminate/> : <Button colorScheme='blue' w='200px' onClick={this.validate}>Entrar</Button>}
-						</Link>
-					</GridItem>
-					
-					<GridItem className='text-center' mt='20px'>
-						<Link href='/home'>
-							<a className="link" href="https://github.com/juliolimareishttps://github.com/juliolimareis/photo-slide" data-size="large" aria-label="Follow @juliolimareis on GitHub">By @juliolimareis</a>
-						</Link>
-					</GridItem>
+				<GridItem className='text-center' mt='20px'>
+					<Link href='/home'>
+						{isLoading ? 
+							<CircularProgress isIndeterminate /> : 
+							<Button 
+								colorScheme='blue'
+								w='200px'
+								onClick={validate}
+							>
+								Entrar
+							</Button>}
+					</Link>
+				</GridItem>
 
-				</Grid>
-			</Container>
-		)
-	}
+				<GridItem className='text-center' mt='20px'>
+					<Link href='/home'>
+						<a 
+							className="link" 
+							href="https://github.com/juliolimareishttps://github.com/juliolimareis/photo-slide" 
+							data-size="large"
+							aria-label="Follow @juliolimareis on GitHub"
+						>
+							By @juliolimareis
+						</a>
+					</Link>
+				</GridItem>
+
+			</Grid>
+		</Container>
+	)
 }
+
+export default LoginPage
+
