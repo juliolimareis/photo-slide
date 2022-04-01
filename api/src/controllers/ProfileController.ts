@@ -83,7 +83,7 @@ export class Profile {
 			this.throwResp.NotFound({title: "Album not found", message: "Álbum não encontrado"})
 		}
 		
-		if(file.originalname.includes(".png") || file.originalname.includes(".jpg") || file.originalname.includes(".jpeg")){
+		if(file.originalname.includes(".png") || file.originalname.includes(".jpg") || file.originalname.includes(".jpeg") || file.originalname.includes(".webp")){
 			if(file.size <= 1048576){
 				return await this.photoService.addPhoto(file, album)
 			}
@@ -92,7 +92,7 @@ export class Profile {
 		}
 
 		this.photoService.removePhoto(file.path)
-		this.throwResp.BadRequest({title: "Type image", message: "Imagem deve ser do tipo .png, .jpg ou .jpeg"})
+		this.throwResp.BadRequest({title: "Type image", message: "Imagem deve ser do tipo .png, .jpg, .jpeg ou .webp"})
 
 		return new PhotoModel
 	}

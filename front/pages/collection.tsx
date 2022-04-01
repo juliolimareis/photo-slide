@@ -1,42 +1,55 @@
-import Router, { useRouter } from 'next/router'
 import { getUrl } from '../config/api'
+
+import { AxiosError } from 'axios'
+
 import { Photo } from '../models/Photo'
 import { Album } from '../models/Album'
+
+import { Message } from '../core/Messages'
+
 import { withAuth } from '../config/withAuth'
+
+import { ArrowBackIcon } from '@chakra-ui/icons'
+
+import Router, { useRouter } from 'next/router'
+import React, { useContext, useEffect, useState } from 'react'
+
 import CardPhoto from '../components/CardImage'
 import ModalComponent from '../components/Modal'
-import { ArrowBackIcon } from '@chakra-ui/icons'
-import React, { useEffect, useState } from 'react'
 import FormAddPhoto from '../components/FormAddPhoto'
 import HeaderPrivate from '../components/HeaderPrivate'
 import ImageComponent from '../components/ImageComponent'
-import { ProfileProvider } from '../provider/ProfileProvider'
+import { ProfileRepository } from '../provider/ProfileRepository'
+
+import useAlert from '../core/hooks/useAlert'
+import UserContext from '../core/UserContext'
+import useAlertRequest from '../core/hooks/useErrorRequest'
+
 import { Container, Text, Button, Grid, GridItem, Table, Tr, Thead, Th, Tbody, Td, CircularProgress, Box} from '@chakra-ui/react'
-import useAlert from '../core/useAlert'
-import useAlertRequest from '../core/useErrorRequest'
 
 const urlImage = `${getUrl()}/image`
 
 const Collection = () => {
+	const {photos, getPhotos, loaderPhotos} = useContext(UserContext)
+
+	const alert = useAlert()
 	const errorRequest = useAlertRequest()
 
 	const [album, setAlbum] = useState<Album>({})
-	const [photos, setPhotos] = useState<Photo[]>([])
 	const [isTable, setTable] = useState<boolean>(false)
-	const [isLoading, setLoading] = useState<boolean>(false)
 	const [photoSelected, setPhotoSelected] = useState<Photo>({})
 	const [isOpenModalPhoto, setOpenModalPhoto] = useState<boolean>(false)
 	const [isOpenModalAddPhoto, setOpenModalAddPhoto] = useState<boolean>(false)
 
-	const profileProvider = new ProfileProvider()
+	const profileRepository = new ProfileRepository()
 
 	const router = useRouter()
   const { id } = router.query
 
 	useEffect(() => {
 		withAuth().then(isAuth => {
-			if (isAuth){
-				getPhotos()
+			if (isAuth && id) {
+				getPhotos(id as string)
 				getAlbum()
 			}else{
 				Router.replace('/home')
@@ -44,52 +57,36 @@ const Collection = () => {
 		})
 	},[])
 
-	const getAlbum = () => {
-		profileProvider.fetchAlbum(id as string).then(
-			res => {
-				setAlbum(res.data)
-			},
-			err => {
-				errorRequest(err)
-				console.log(err);
-			}
+	const requestError = (err: AxiosError) => {
+		errorRequest(err)
+	} 
+
+	const getAlbum = () => {		
+		profileRepository.fetchAlbum(id as string).then(
+			res => setAlbum(res.data),
+			err => requestError(err)
 		)
 	}
 	
-	const deletePhoto = (id: number) => {
-		profileProvider.deletePhoto(id).then(
+	const deletePhoto = () => {
+		profileRepository.deletePhoto(photoSelected.idPhoto as number).then(
 			() => {
+				getPhotos(id as string)
 				onClosePhoto()
+				alert('success', Message.PHOTO_DELETE.replace('{photo}', photoSelected.title ?? ''))
 			},
-			err => {
-				errorRequest(err)
-				console.log(err);
-			}
+			err => requestError(err)
 		)
 	}
 	
 	const deleteAlbum = () => {
-		profileProvider.deleteAlbum(id as string).then(
+		profileRepository.deleteAlbum(id as string).then(
 			() => {
+				alert('success', Message.ALBUM_DELETE)
 				Router.replace('/home')
 			},
-			err => {
-				errorRequest(err)
-				console.log(err);
-			}
+			err => requestError(err)
 		)
-	}
-
-	const getPhotos = () => {		
-		profileProvider.fetchPhotos(id as string).then(
-			res => {
-				setPhotos(res.data)
-			},
-			err => {
-				errorRequest(err)
-				console.log(err);
-			}
-		).finally(() => setLoading(false))
 	}
 	
 	const handlePhotoSelected = (_photo: Photo) => {
@@ -102,12 +99,10 @@ const Collection = () => {
 	}
 
 	const onCloseAddPhoto = (): void => {
-		getPhotos()
 		setOpenModalAddPhoto(false)
 	}
 	
 	const onClosePhoto = (): void => {
-		getPhotos()
 		setOpenModalPhoto(false)
 	}
 
@@ -141,14 +136,16 @@ const Collection = () => {
 				templateRows='repeat(1, 1fr)'
 				templateColumns='repeat(1, 1fr)'
 			>
-				<Container className={isLoading ? 'text-center' : 'hidden'}>
+				<Container className={loaderPhotos ? 'text-center' : 'hidden'}>
 					<CircularProgress isIndeterminate/>	
 				</Container>
 
-				<GridItem mb={15} className={isLoading ? 'hidden': 'm-a'}>
+				<GridItem mb={15} className={loaderPhotos ? 'hidden': 'm-a'}>
 					{
-						isTable ? <TablePhoto photos={photos} setPhotoSelected={handlePhotoSelected}/>	
-						: <CardsPhoto photos={photos} setPhotoSelected={handlePhotoSelected}/>
+						isTable ? 
+							<TablePhoto photos={photos} setPhotoSelected={handlePhotoSelected}/>	
+						: 
+							<CardsPhoto photos={photos} setPhotoSelected={handlePhotoSelected}/>
 					}
 				</GridItem>
 
@@ -192,7 +189,7 @@ const Collection = () => {
 					<Button 
 						w='200px' 
 						colorScheme='red' 
-						onClick={()=> deletePhoto(photoSelected.idPhoto ?? 0)}
+						onClick={()=> deletePhoto()}
 					>
 						Excluir foto 
 					</Button> 
@@ -206,13 +203,13 @@ const Collection = () => {
 const CardsPhoto = (props: { photos: Photo[], setPhotoSelected(photo: Photo): void }) => (
 	<Box>
 		{props.photos.map((photo, i) => 
-			<span key={i} onClick={() => props.setPhotoSelected(photo)}>
+			<Box as='span' key={i} onClick={() => props.setPhotoSelected(photo)}>
 				<CardPhoto 
 					title={photo.title}
 					desc={photo.description}
 					url={`${urlImage}/${photo.serverName}`}
 				></CardPhoto>
-			</span>
+			</Box>
 		)}
 	</Box>
 )

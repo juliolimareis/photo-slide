@@ -1,34 +1,50 @@
 import { Album } from '../models/Album'
-import React, { ChangeEvent, useState } from 'react'
-import { ProfileProvider } from '../provider/ProfileProvider'
+
+import React, { ChangeEvent, useContext, useState } from 'react'
+
+import { Message } from '../core/Messages'
+
+import { ProfileRepository } from '../provider/ProfileRepository'
+
+import useAlert from '../core/hooks/useAlert'
+import useErrorRequest from '../core/hooks/useErrorRequest'
+
 import { Input, Text, Button, Grid, GridItem, Textarea, CircularProgress } from '@chakra-ui/react'
+import UserContext from '../core/UserContext'
 
 const FormAddAlbum = (props: { onSend(): void }) => {
+	const {getAlbums} = useContext(UserContext)
+
+
+	const alert = useAlert()
+	const errorRequest = useErrorRequest()
+
   const mbText: string = '8px'
-  const profileProvider = new ProfileProvider()
+  const profileRepository = new ProfileRepository()
+	
+	const [isLoading, setLoading] = useState<boolean>(false)
 
   const [album, setAlbum] = useState<Album>({
     title: '',
     coverUrl: '',
     description: '',
   })
-  const [isLoading, setLoading] = useState<boolean>(false)
+	
 
-  const dispatchAlbum = async () => {
+  const dispatchAlbum = () => {
     setLoading(true)
-
-    await profileProvider.addAlbum(album).then(
+    profileRepository.addAlbum(album).then(
       () => {
         setAlbum({
           title: '',
           description: '',
           coverUrl: ''
         })
+				getAlbums()
+				alert('success', Message.ALBUM_ADD.replace('{album}', album.title as string))
         props.onSend()
       },
-      error => {
-        console.log(error);
-      }
+      err => errorRequest(err)
     ).finally(() => setLoading(false))
   }
 

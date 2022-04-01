@@ -3,7 +3,7 @@ import { AxiosResponse } from "axios";
 
 import { Register } from '../models/Register';
 
-export class UserProvider {
+export class UserRepository {
 	async create(register: Register): Promise<AxiosResponse> {
 		return await api.post('/user', register)
 	}

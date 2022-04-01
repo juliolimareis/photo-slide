@@ -1,37 +1,36 @@
-import Router from 'next/router'
 import { AxiosError } from 'axios'
+
+import Router from 'next/router'
+import React, { ChangeEvent, useContext, useEffect } from 'react'
+
 import { Photo } from '../models/Photo'
 import { Message } from '../core/Messages'
-// import useSnackbar from '../core/useSnackbar'
-import React, { ChangeEvent, useEffect } from 'react'
-import { ProfileProvider } from '../provider/ProfileProvider'
+
+import useAlert from '../core/hooks/useAlert'
+import useErrorRequest from '../core/hooks/useErrorRequest'
+
+import { ProfileRepository } from '../provider/ProfileRepository'
 import { Input, Text, Button, Grid, GridItem, Textarea, CircularProgress, Box } from '@chakra-ui/react'
+import UserContext from '../core/UserContext'
 
 const FormAddPhoto = (props: { beforeSend(): void }): JSX.Element => {
-	// const snackbar = useSnackbar()
+	const {getPhotos} = useContext(UserContext)
+
+	const alert = useAlert()
+	const errorRequest = useErrorRequest()
 
 	const mbText: string = '8px'
-	const marginElement: string = '10px'
-	const profileProvider = new ProfileProvider()
+	const profileRepository = new ProfileRepository()
 
-	const [photo, setPhoto] = React.useState<Photo>({})
 	const [photos, setPhotos] = React.useState<Photo[] | any>([])
 	const [isLoading, setLoading] = React.useState<boolean>(false)
 	const [isError, setError] = React.useState<boolean>(false)
 	const [files, setFiles] = React.useState<FileList | null>()
-	const [messages, setMessages] = React.useState<string[]>([])
-	const [message, setMessage] = React.useState<string>("")
 	const [idAlbum, setIdAlbum] = React.useState<string>("")
 
 	useEffect(() => {
 		setIdAlbum(`${Router.query.id}`)
 	}, [])
-
-	useEffect(() => {
-		if (!isError) {
-			setMessages([])
-		}
-	}, [isError])
 
 	const handlePhoto = (
 		e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>, index: number
@@ -85,7 +84,7 @@ const FormAddPhoto = (props: { beforeSend(): void }): JSX.Element => {
 				let formData = new FormData();
 				formData.append("file", file);
 
-				await profileProvider.uploadPhoto(idAlbum, formData).then(
+				await profileRepository.uploadPhoto(idAlbum, formData).then(
 					(res: any) => {
 						updatePhoto(res.data, i)
 					},
@@ -94,12 +93,10 @@ const FormAddPhoto = (props: { beforeSend(): void }): JSX.Element => {
 						if (files) {
 							fileName = files[i].name
 						}
-						setMessageRequestError(error, fileName)
-					})
+						requestError(error, fileName)
+					}).finally(() => setLoading(false))
 			}
 		}
-
-		setLoading(false)
 
 		if (!isError) {
 			props.beforeSend()
@@ -112,36 +109,25 @@ const FormAddPhoto = (props: { beforeSend(): void }): JSX.Element => {
 
 		photo.title = photos[index].title
 		photo.color = photos[index].color,
-			photo.description = photos[index].description,
-			photo.datetimeCreation = photos[index].datetimeCreation
+		photo.description = photos[index].description,
+		photo.datetimeCreation = photos[index].datetimeCreation
 
-		await profileProvider.updatePhoto(photo.idPhoto ?? 0, photo)
-			.catch((error: AxiosError) => {
+		await profileRepository.updatePhoto(photo.idPhoto ?? 0, photo).then(
+			() => getPhotos(idAlbum),
+			(error: AxiosError) => {
+				requestError(error, photo.fileName)
 				isUpdate = false
-				setMessageRequestError(error, photo.fileName)
-			})
+			}
+		)
 		return isUpdate
 	}
 
-	const setMessageRequestError = (error: AxiosError, photoName?: string): void => {
-		let message = 'Erro desconhecido.'
-
+	const requestError = (error: AxiosError, photoName?: string): void => {
 		if (error.response?.status == 400) {
-			// snackbar({
-			// 	description: Message.PHOTO_ERROR_SIZE.replace('{photoName}', photoName ?? "")
-			// })
-			message = Message.PHOTO_ERROR_SIZE.replace('{photoName}', photoName ?? "")
+			alert('error', Message.PHOTO_ERROR_SIZE.replace('{photoName}', photoName as string))
+		}else{
+			errorRequest(error)
 		}
-
-		setMessages([message])
-		setError(true)
-		console.log(error);
-	}
-
-	const getValue = (fieldName: string, index: number): string => {
-		if (photos[index] && photos[index][fieldName]) {
-			return photos[index][fieldName]
-		} return ''
 	}
 
 	return (
@@ -153,19 +139,7 @@ const FormAddPhoto = (props: { beforeSend(): void }): JSX.Element => {
 					size='sm'
 					type='file'
 					multiple
-					accept=".jpg,.jpeg,.png"
-				/>
-			</GridItem>
-
-			{/* <GridItem rowSpan={4}>
-				{messages}
-			</GridItem> */}
-
-			<GridItem rowSpan={4}>
-				<FormPhoto 
-					mbText={mbText}
-					photos={photos}
-					handlePhoto={handleFiles}
+					accept=".jpg,.jpeg,.png,.webp"
 				/>
 			</GridItem>
 
@@ -188,21 +162,17 @@ const FormAddPhoto = (props: { beforeSend(): void }): JSX.Element => {
 				)
 			}
 
-
+			<GridItem rowSpan={4}>
+				<FormPhoto 
+					mbText={mbText}
+					photos={photos}
+					handlePhoto={handlePhoto}
+				/>
+			</GridItem>
 		</Box>
 	)
 
 }
-
-const MessagesDanger = (props: { messages: string[] }): JSX.Element => (
-	<Box>
-		{props.messages.map(
-			(message: string, index: number) => (
-				<Text key={index} color="orange">{message}</Text>
-			)
-		)}
-	</Box>
-)
 
 const FormPhoto = (
 	props: {

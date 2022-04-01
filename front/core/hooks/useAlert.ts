@@ -1,8 +1,6 @@
-import { AxiosError } from 'axios';
-import { Message } from './Messages';
 import { useToast } from "@chakra-ui/react"
 
-export const useAlert = () => {
+const useAlert = () => {
 	const toast = useToast()
 
 	const alert = (status?: "info" | "warning" | "success" | "error", message?: string) => (

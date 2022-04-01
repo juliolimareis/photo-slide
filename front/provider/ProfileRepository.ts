@@ -1,12 +1,11 @@
-import api, { getHeaders } from "../config/api";
-
-import { AxiosResponse } from "axios";
-
 import { User } from "../models/User";
 import { Album } from '../models/Album';
-import { Photo } from './../models/Photo';
+import { Photo } from '../models/Photo';
 
-export class ProfileProvider {
+import { AxiosResponse } from "axios";
+import api, { getHeaders } from "../config/api";
+
+export class ProfileRepository {
 	async fetchProfile(): Promise<AxiosResponse<User>> {
 		return await api.get<User>('/profile', {headers: getHeaders()})
 	}

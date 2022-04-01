@@ -1,4 +1,4 @@
-import React, { ReactElement, ReactNode } from "react"
+import React, { ReactNode } from "react"
 import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/react"
 
 const ModalComponent = (
