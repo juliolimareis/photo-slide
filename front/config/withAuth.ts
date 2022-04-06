@@ -1,6 +1,6 @@
 import Router from "next/router";
 
-export async function withAuth(): Promise<boolean> {
+export const withAuth = async () => {
 	const accessToken = await localStorage.getItem("token-api");
 	if (!accessToken) {
 		Router.replace("/");
